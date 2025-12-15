@@ -6,15 +6,15 @@
 
         <style>
 			body {background-color:#7092be; overflow:hidden; user-select:none;}	
-			div#frame_div {display:block; left:30px; right:30px; top:30px; bottom:30px; position:absolute;}
-			div#viewer_div {display:block; left:0px; width:calc(100% - 280px); top:0px; bottom:0px; position:absolute;}
-			div#ctrls_div {display:block; left:calc(100% - 250px); width:250px; top:0px; bottom:0px; position:absolute;}
+			div#frame_div {display:block; left:2%; right:0%; top:3%; bottom:3%; position:absolute;}
+			div#viewer_div {display:block; left:0%; width:80%; top:0%; bottom:0%; position:absolute;}
+			div#ctrls_div {display:block; left:80%; right:0%; top:0%; bottom:0%; position:absolute;}
 		</style>	
 			
 		<script src="gl-matrix.js"></script>
 		<script src="dexie.js"></script>
 		<script src="UTIF.js"></script>
-		<script src="biglime-min.js"></script>
+		<script src="biglime.js"></script>
 		<script src="LabelLoader.js"></script>
 	
 		<script type="text/javascript">	
@@ -65,25 +65,25 @@
 				setRenderParams();
 
 				ctrlsDiv = document.getElementById('ctrls_div');
-				BigLime.Ui.CreateElement('label', 'title_label', ctrlsDiv, {top:0, height:40, left:8, right:0, 
-					fontSize:'24px', fontFamily:appFont, fontWeight:'bold', textAlign:'center'}, {innerHTML:'Scroll Slab Viewer'});
+				BigLime.Ui.CreateElement('label', 'title_label', ctrlsDiv, {top:0, height:'3.2%', left:0, right:0, 
+					fontSize:'1.5vw', fontFamily:appFont, fontWeight:'bold', textAlign:'center'}, {innerHTML:'Scroll Slab Viewer'});
 
 				cvdata.loadImgBtn = BigLime.Ui.CreateLoadButton({id:'load_img_btn', parent:ctrlsDiv, text:'Load Image', flatStyle:false, 
             		dbTag:'VVloadImg', multiple:false, provideLoader:true, callback:this.onImgChosen.bind(this), 
-            		styles:{height:40, top:105, left:'15%', right:'15%', fontSize:'16px', borderWidth:1}} );
+            		styles:{height:'4.5%', top:'9.5%', left:'15%', right:'15%', fontSize:'16px', borderWidth:1}} );
 
-				cvdata.imgLabel = BigLime.Ui.CreateElement('label', 'img_label', ctrlsDiv, {top:150, height:20, left:8, right:0, 
+				cvdata.imgLabel = BigLime.Ui.CreateElement('label', 'img_label', ctrlsDiv, {top:'14.3%', height:'1.8%', left:0, right:0, 
 					fontSize:'16px', fontFamily:appFont, fontWeight:'bold', textAlign:'center'}, {innerHTML:''});
 
 				cvdata.loadlabelsBtn = BigLime.Ui.CreateLoadButton({id:'load_labels_btn', parent:ctrlsDiv, text:'Load Labels', flatStyle:false, 
             		dbTag:'VVloadLabels', multiple:false, provideLoader:false, callback:this.onLabelsChosen.bind(this), 
-            		styles:{height:40, top:220, left:'15%', right:'15%', fontSize:'16px', borderWidth:1}} );
+            		styles:{height:'4.5%', top:'20.5%', left:'15%', right:'15%', fontSize:'16px', borderWidth:1}} );
 
-				cvdata.labelsLabel = BigLime.Ui.CreateElement('label', 'labels_label', ctrlsDiv, {top:265, height:20, left:8, right:0, 
+				cvdata.labelsLabel = BigLime.Ui.CreateElement('label', 'labels_label', ctrlsDiv, {top:'25.3%', height:'1.8%', left:0, right:0, 
 					fontSize:'16px', fontFamily:appFont, fontWeight:'bold', textAlign:'center'}, {innerHTML:''});
 
 				cvdata.showBtnInfo = BigLime.Ui.CreateButtonGroup("show_buttons", ctrlsDiv,
-					{left:'8%', right:'8%', height:160, top:360, fontSize:16}, 
+					{left:'15%', right:'15%', height:160/window.devicePixelRatio, top:'34%', fontSize:16}, 
 					[ 
 						{label:'Show papyrus', checked:true},
 						{label:'Show labels', checked:true},
