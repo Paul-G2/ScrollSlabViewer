@@ -6,9 +6,9 @@
 
         <style>
 			body {background-color:#7092be; overflow:hidden; user-select:none;}	
-			div#frame_div {display:block; left:30px; right:30px; top:30px; bottom:30px; position:absolute;}
-			div#viewer_div {display:block; left:0px; width:calc(100% - 280px); top:0px; bottom:0px; position:absolute;}
-			div#ctrls_div {display:block; left:calc(100% - 250px); width:250px; top:0px; bottom:0px; position:absolute;}
+			div#frame_div {display:block; left:2%; right:0%; top:3%; bottom:3%; position:absolute;}
+			div#viewer_div {display:block; left:0%; width:80%; top:0%; bottom:0%; position:absolute;}
+			div#ctrls_div {display:block; left:80%; right:0%; top:0%; bottom:0%; position:absolute;}
 		</style>	
 			
 		<script src="gl-matrix.js"></script>
@@ -28,17 +28,17 @@
 				const appFont = BigLime.Ui.DefaultFontFamily
 
 				cvdata.labelColors = [
-					[.17, .81, .28, 1],   // green
+					[0.0, 1.0, 0.0, 1],   // green
 				    [1.0, 0.0, .06, 1],   // red
 					[0.0, .46, .86, 1],   // blue
 					[1.0, 1.0, 0.0, 1],   // yellow
-					[0.0, .57, .29, 1],   // forest
+					[0.0, .62, .34, 1],   // forest
 					[1.0, .64, .02, 1],   // orpiment  
-					[0.0, .80, .90, 1],   // sky
+					[0.0, .60, .70, 1],   // sky 
 					[1.0, .80, .60, 1],   // honeydew
 					[.62, .80, 0.0, 1],   // lime
 					[.60, 0.0, 0.0, 1],   // wine
-					[0.0, .60, .56, 1],   // turquoise
+					[0.0, .60, .50, 1],   // turquoise
 					[1.0, .46, .57, 1],   // pink
 					[.58, 1.0, .71, 1],   // jade
 					[.45, .04, 1.0, 1],   // violet
@@ -65,47 +65,51 @@
 				setRenderParams();
 
 				ctrlsDiv = document.getElementById('ctrls_div');
-				BigLime.Ui.CreateElement('label', 'title_label', ctrlsDiv, {top:0, height:40, left:8, right:0, 
-					fontSize:'24px', fontFamily:appFont, fontWeight:'bold', textAlign:'center'}, {innerHTML:'Scroll Slab Viewer'});
+				BigLime.Ui.CreateElement('label', 'title_label', ctrlsDiv, {top:0, height:'3.2%', left:0, right:0, 
+					fontSize:'1.5vw', fontFamily:appFont, fontWeight:'bold', textAlign:'center'}, {innerHTML:'Scroll Slab Viewer'});
 
 				cvdata.loadImgBtn = BigLime.Ui.CreateLoadButton({id:'load_img_btn', parent:ctrlsDiv, text:'Load Image', flatStyle:false, 
             		dbTag:'VVloadImg', multiple:false, provideLoader:true, callback:this.onImgChosen.bind(this), 
-            		styles:{height:40, top:105, left:'15%', right:'15%', fontSize:'16px', borderWidth:1}} );
+            		styles:{height:'4.5%', top:'9.5%', left:'15%', right:'15%', fontSize:'16px', fontWeight:'normal', borderWidth:1}} );
 
-				cvdata.imgLabel = BigLime.Ui.CreateElement('label', 'img_label', ctrlsDiv, {top:150, height:20, left:8, right:0, 
+				cvdata.imgLabel = BigLime.Ui.CreateElement('label', 'img_label', ctrlsDiv, {top:'14.3%', height:'1.8%', left:0, right:0, 
 					fontSize:'16px', fontFamily:appFont, fontWeight:'bold', textAlign:'center'}, {innerHTML:''});
 
 				cvdata.loadlabelsBtn = BigLime.Ui.CreateLoadButton({id:'load_labels_btn', parent:ctrlsDiv, text:'Load Labels', flatStyle:false, 
             		dbTag:'VVloadLabels', multiple:false, provideLoader:false, callback:this.onLabelsChosen.bind(this), 
-            		styles:{height:40, top:220, left:'15%', right:'15%', fontSize:'16px', borderWidth:1}} );
+            		styles:{height:'4.5%', top:'20.5%', left:'15%', right:'15%', fontSize:'16px', fontWeight:'normal', borderWidth:1}} );
 
-				cvdata.labelsLabel = BigLime.Ui.CreateElement('label', 'labels_label', ctrlsDiv, {top:265, height:20, left:8, right:0, 
+				cvdata.labelsLabel = BigLime.Ui.CreateElement('label', 'labels_label', ctrlsDiv, {top:'25.3%', height:'1.8%', left:0, right:0, 
 					fontSize:'16px', fontFamily:appFont, fontWeight:'bold', textAlign:'center'}, {innerHTML:''});
 
+				const dpr = window.devicePixelRatio
+				const fs = (dpr > 1) ? 16/(0.8*dpr) : 16;
 				cvdata.showBtnInfo = BigLime.Ui.CreateButtonGroup("show_buttons", ctrlsDiv,
-					{left:'8%', right:'8%', height:160, top:360, fontSize:16}, 
+					{left:'15%', right:'15%', height:160/dpr, top:'34%', fontSize:fs}, 
 					[ 
 						{label:'Show papyrus', checked:true},
 						{label:'Show labels', checked:true},
 						{label:'Show unlabeled', checked:false},
 					],
 					function(e){ onShowButtonChange(e); },
-					{btnSize:24, btnLeft:18, independent:true}
+					{btnSize:24/dpr, btnLeft:18/dpr, independent:true}
 				);
 
-				BigLime.Ui.CreateElement('fieldset', '0', ctrlsDiv, {bottom:0, height:210, left:20, right:20, border:'1px solid #606060' } );
-				BigLime.Ui.CreateElement('label', '1', ctrlsDiv, {bottom:180, left:35, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Mouse:'});
-				BigLime.Ui.CreateElement('label', '2', ctrlsDiv, {bottom:150, left:55, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Left:'});
-				BigLime.Ui.CreateElement('label', '3', ctrlsDiv, {bottom:150, left:145, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Rotate'});
-				BigLime.Ui.CreateElement('label', '4', ctrlsDiv, {bottom:125, left:55, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Middle:'});
-				BigLime.Ui.CreateElement('label', '5', ctrlsDiv, {bottom:125, left:145, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Zoom'});
-				BigLime.Ui.CreateElement('label', '6', ctrlsDiv, {bottom:100, left:55, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Right:'});
-				BigLime.Ui.CreateElement('label', '7', ctrlsDiv, {bottom:100, left:145, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Pan'});
-				BigLime.Ui.CreateElement('label', '8', ctrlsDiv, {bottom:75, left:55, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Shift-Left:'});
-				BigLime.Ui.CreateElement('label', '9', ctrlsDiv, {bottom:75, left:145, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Contrast'});
-				BigLime.Ui.CreateElement('label', 'a', ctrlsDiv, {bottom:50, left:55, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Ctrl-Left:'});
-				BigLime.Ui.CreateElement('label', 'b', ctrlsDiv, {bottom:50, left:145, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Clip'});
-				BigLime.Ui.CreateElement('label', 'c', ctrlsDiv, {bottom:15,  left:55, fontSize:'16px', fontFamily:appFont, }, {innerHTML:"'R' to reset"});
+				const fsb = "min(1.3vw, 16px)"; //fs.toString() + 'px';
+				const fieldset = BigLime.Ui.CreateElement('fieldset', '0', ctrlsDiv, {bottom:0, height:'21%', left:'10%', right:'10%',
+					fontSize:fsb, fontFamily:appFont, fontWeight:'normal', border:'1px solid #606060' } );
+				BigLime.Ui.CreateElement('label', '1', fieldset, {top:'2%', left:'8%' }, {innerHTML:'Mouse:'});
+				BigLime.Ui.CreateElement('label', '2', fieldset, {top:'17%', left:'16%'}, {innerHTML:'Left:'});
+				BigLime.Ui.CreateElement('label', '3', fieldset, {top:'17%', left:'58%'}, {innerHTML:'Rotate'});
+				BigLime.Ui.CreateElement('label', '4', fieldset, {top:'30%', left:'16%'}, {innerHTML:'Middle:'});
+				BigLime.Ui.CreateElement('label', '5', fieldset, {top:'30%', left:'58%'}, {innerHTML:'Zoom'});
+				BigLime.Ui.CreateElement('label', '6', fieldset, {top:'43%', left:'16%'}, {innerHTML:'Right:'});
+				BigLime.Ui.CreateElement('label', '7', fieldset, {top:'43%', left:'58%'}, {innerHTML:'Pan'});
+				BigLime.Ui.CreateElement('label', '8', fieldset, {top:'56%', left:'16%'}, {innerHTML:'Shift-Left:'});
+				BigLime.Ui.CreateElement('label', '9', fieldset, {top:'56%', left:'58%'}, {innerHTML:'Contrast'});
+				BigLime.Ui.CreateElement('label', 'a', fieldset, {top:'69%', left:'16%'}, {innerHTML:'Ctrl-Left:'});
+				BigLime.Ui.CreateElement('label', 'b', fieldset, {top:'69%', left:'58%'}, {innerHTML:'Clip box'});
+				BigLime.Ui.CreateElement('label', 'c', fieldset, {top:'85%',  left:'16%'}, {innerHTML:"'R' to reset"});
 
 				document.addEventListener('keyup', (event) => {
 					if (event.code == 'KeyR') {
@@ -237,9 +241,11 @@
 				
 				rp.auxVolColorMap[0] = btns[2].checked ? (btns[0].checked ? [0, 0, 0, -1] :  [0, 0, 0, 0]) :  [0, 0, 0, 0];
 				rp.auxVolColorMap[1] = btns[0].checked ? [0, 0, 0, -1] :  [0, 0, 0, 0];
+				rp.auxVolColorMap[2] = btns[0].checked ? [0, 0, 0, -1] :  [0, 0, 0, 0];
 				for (let i=3; i<24; i++) {
 					rp.auxVolColorMap[i] = btns[1].checked ? labelColors[(i-3)%labelColors.length] : (btns[0].checked ? [0, 0, 0, -1] :  [0, 0, 0, 0]);
 				}
+
 				v3d.render();
 			}
 
