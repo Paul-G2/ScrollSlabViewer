@@ -14,18 +14,13 @@
 		<script src="gl-matrix.js"></script>
 		<script src="dexie.js"></script>
 		<script src="UTIF.js"></script>
-		<script src="biglime.js"></script>
+		<script src="biglime-min.js"></script>
 		<script src="LabelLoader.js"></script>
 	
 		<script type="text/javascript">	
 
 			// Main program
 			function main() {
-
-				console.log('test')
-				console.log(window.devicePixelRatio)
-
-				try {
 				const cvdata = document.cvdata = {}
 				cvdata.UNLABELED = 0;
 				cvdata.LABELED_BG = 1;
@@ -122,10 +117,6 @@
 						v3d.render();
 					}
 			 	});
-				}
-				catch(err){
-					consol.log(err)
-				}
 			}
 
 
@@ -289,4 +280,5 @@
 		</div>
 	</body>
 </html>
+
 
