@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Scroll Slab Viewer</title>
+
+        <style>
+			body {background-color:#7092be; overflow:hidden; user-select:none;}	
+			div#frame_div {display:block; left:30px; right:30px; top:30px; bottom:30px; position:absolute;}
+			div#viewer_div {display:block; left:0px; width:calc(100% - 280px); top:0px; bottom:0px; position:absolute;}
+			div#ctrls_div {display:block; left:calc(100% - 250px); width:250px; top:0px; bottom:0px; position:absolute;}
+		</style>	
+			
+		<script src="gl-matrix.js"></script>
+		<script src="dexie.js"></script>
+		<script src="UTIF.js"></script>
+		<script src="biglime-min.js"></script>
+		<script src="LabelLoader.js"></script>
+	
+		<script type="text/javascript">	
+
+			// Main program
+			function main() {
+				const cvdata = document.cvdata = {}
+				cvdata.UNLABELED = 0;
+				cvdata.LABELED_BG = 1;
+				cvdata.LABELED_FG = 2;
+				const appFont = BigLime.Ui.DefaultFontFamily
+
+				cvdata.labelColors = [
+					[.17, .81, .28, 1],   // green
+				    [1.0, 0.0, .06, 1],   // red
+					[0.0, .46, .86, 1],   // blue
+					[1.0, 1.0, 0.0, 1],   // yellow
+					[0.0, .57, .29, 1],   // forest
+					[1.0, .64, .02, 1],   // orpiment  
+					[0.0, .80, .90, 1],   // sky
+					[1.0, .80, .60, 1],   // honeydew
+					[.62, .80, 0.0, 1],   // lime
+					[.60, 0.0, 0.0, 1],   // wine
+					[0.0, .60, .56, 1],   // turquoise
+					[1.0, .46, .57, 1],   // pink
+					[.58, 1.0, .71, 1],   // jade
+					[.45, .04, 1.0, 1],   // violet
+					[0.0, 1.0, 1.0, 1],   // cyan
+					[.56, .49, 0.0, 1],   // khaki
+					[.91, .47, 1.0, 1],   // lavender
+					[.60, .25, 0.0, 1],   // caramel
+					[0.0, 0.0, 1.0, 1],   // blue
+					[.50, .50, .50, 1],   // iron
+					[.90, .90, .90, 1],   // snow
+					[.31, .21, .14, 1]    // brown
+				]
+
+				BigLime.UtilityDbName = "ScrollSlabViewerDB";
+
+				const v3d = cvdata.viewer = new BigLime.ThreeDViewer( {site:document.getElementById('viewer_div')} );
+				v3d.renderEngine.auxVolume.setInterpType(BigLime.Interp3D.NN);
+				v3d.overlayInteractor.enabled = true;
+				v3d.multiInteractor.setEventTypes('zoom', {btns:1, shift:false,  ctrl:false, alt:false});
+				v3d.multiInteractor.setEventTypes('wl', {btns:0, shift:true,  ctrl:false, alt:false});
+				v3d.overlayInteractor.setEventTypes('drag', {btns:0, shift:false,  ctrl:true, alt:false});
+				v3d.overlayInteractor.rotEnabled = v3d.overlayInteractor.pickEnabled = false;
+				v3d.setDefaultOrientation( BigLime.Utils.GetRotMatrix([1,0,0], [0,1,0]) );
+				setRenderParams();
+
+				ctrlsDiv = document.getElementById('ctrls_div');
+				BigLime.Ui.CreateElement('label', 'title_label', ctrlsDiv, {top:0, height:40, left:8, right:0, 
+					fontSize:'24px', fontFamily:appFont, fontWeight:'bold', textAlign:'center'}, {innerHTML:'Scroll Slab Viewer'});
+
+				cvdata.loadImgBtn = BigLime.Ui.CreateLoadButton({id:'load_img_btn', parent:ctrlsDiv, text:'Load Image', flatStyle:false, 
+            		dbTag:'VVloadImg', multiple:false, provideLoader:true, callback:this.onImgChosen.bind(this), 
+            		styles:{height:40, top:105, left:'15%', right:'15%', fontSize:'16px', borderWidth:1}} );
+
+				cvdata.imgLabel = BigLime.Ui.CreateElement('label', 'img_label', ctrlsDiv, {top:150, height:20, left:8, right:0, 
+					fontSize:'16px', fontFamily:appFont, fontWeight:'bold', textAlign:'center'}, {innerHTML:''});
+
+				cvdata.loadlabelsBtn = BigLime.Ui.CreateLoadButton({id:'load_labels_btn', parent:ctrlsDiv, text:'Load Labels', flatStyle:false, 
+            		dbTag:'VVloadLabels', multiple:false, provideLoader:false, callback:this.onLabelsChosen.bind(this), 
+            		styles:{height:40, top:220, left:'15%', right:'15%', fontSize:'16px', borderWidth:1}} );
+
+				cvdata.labelsLabel = BigLime.Ui.CreateElement('label', 'labels_label', ctrlsDiv, {top:265, height:20, left:8, right:0, 
+					fontSize:'16px', fontFamily:appFont, fontWeight:'bold', textAlign:'center'}, {innerHTML:''});
+
+				cvdata.showBtnInfo = BigLime.Ui.CreateButtonGroup("show_buttons", ctrlsDiv,
+					{left:'8%', right:'8%', height:160, top:360, fontSize:16}, 
+					[ 
+						{label:'Show papyrus', checked:true},
+						{label:'Show labels', checked:true},
+						{label:'Show unlabeled', checked:false},
+					],
+					function(e){ onShowButtonChange(e); },
+					{btnSize:24, btnLeft:18, independent:true}
+				);
+
+				BigLime.Ui.CreateElement('fieldset', '0', ctrlsDiv, {bottom:0, height:210, left:20, right:20, border:'1px solid #606060' } );
+				BigLime.Ui.CreateElement('label', '1', ctrlsDiv, {bottom:180, left:35, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Mouse:'});
+				BigLime.Ui.CreateElement('label', '2', ctrlsDiv, {bottom:150, left:55, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Left:'});
+				BigLime.Ui.CreateElement('label', '3', ctrlsDiv, {bottom:150, left:145, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Rotate'});
+				BigLime.Ui.CreateElement('label', '4', ctrlsDiv, {bottom:125, left:55, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Middle:'});
+				BigLime.Ui.CreateElement('label', '5', ctrlsDiv, {bottom:125, left:145, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Zoom'});
+				BigLime.Ui.CreateElement('label', '6', ctrlsDiv, {bottom:100, left:55, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Right:'});
+				BigLime.Ui.CreateElement('label', '7', ctrlsDiv, {bottom:100, left:145, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Pan'});
+				BigLime.Ui.CreateElement('label', '8', ctrlsDiv, {bottom:75, left:55, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Shift-Left:'});
+				BigLime.Ui.CreateElement('label', '9', ctrlsDiv, {bottom:75, left:145, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Contrast'});
+				BigLime.Ui.CreateElement('label', 'a', ctrlsDiv, {bottom:50, left:55, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Ctrl-Left:'});
+				BigLime.Ui.CreateElement('label', 'b', ctrlsDiv, {bottom:50, left:145, fontSize:'16px', fontFamily:appFont, }, {innerHTML:'Clip'});
+				BigLime.Ui.CreateElement('label', 'c', ctrlsDiv, {bottom:15,  left:55, fontSize:'16px', fontFamily:appFont, }, {innerHTML:"'R' to reset"});
+
+				document.addEventListener('keyup', (event) => {
+					if (event.code == 'KeyR') {
+						const v3d = document.cvdata.viewer;
+						v3d.resetPan();
+						v3d.renderParams.zoom = 0.80*v3d.calcDefaultOrthoZoom();
+						v3d.resetOrientation();
+						v3d.resetSlab();
+						v3d.render();
+					}
+			 	});
+			}
+
+
+			function onImgChosen(files, loader) 
+			{
+				const cvdata = document.cvdata;
+				const loadImgBtn = cvdata.loadImgBtn;
+				const v3d = cvdata.viewer;
+
+				try {
+					if (!files || !files.length) { return; }
+					if (!loader) { alert('Failed to get a loader for the selected files.'); return; }
+
+					loadImgBtn.ignoreClicks = true; // Prevent overlapping load requests
+					v3d.loadVolume(files, loader, 
+						// Completion callback
+						function(errors, warnings) {
+							loadImgBtn.ignoreClicks = false;
+							loadImgBtn.innerHTML = loadImgBtn.readyText;
+
+							if (errors) {
+								alert('Failed to load image.\n' + errors);
+								return;
+							} else if (warnings) {
+								alert('Warnings while loading image:\n' + warnings);
+							}
+							
+							cvdata.imgLabel.innerHTML = files[0].name;
+							v3d.fastDrawDownsamp = 1.0;
+							v3d.renderParams.zoom = 0.80 *v3d.calcDefaultOrthoZoom();
+							if (!v3d.renderEngine.auxVolume.loaded && !v3d.renderEngine.loadingAuxData) {
+								// Load a dummy aux volume
+								v3d.renderEngine.auxVolume.fill(cvdata.LABELED_BG);
+							}
+							v3d.render();
+						}.bind(this),
+
+						// Progress callback
+						function(current, total) { 
+							loadImgBtn.innerHTML = (current === 0) ? "Loading..." :  "Loading " + current + "/" + total;
+						}.bind(this)
+					);
+				}
+				catch(err) {
+					alert('Failed to load image.\n'  + err);
+					loadImgBtn.innerHTML = loadImgBtn.readyText;
+					loadImgBtn.ignoreClicks = false;
+				}
+			}
+
+
+			function onLabelsChosen(files) 
+			{
+				const cvdata = document.cvdata;
+				const loadlabelsBtn = cvdata.loadlabelsBtn;
+				const v3d = cvdata.viewer;
+
+				try {
+					if (!files || !files.length) { return; }
+					
+					loadlabelsBtn.ignoreClicks = true; // Prevent overlapping load requests
+
+					v3d.loadAuxVolume(files, new ScrollSlabViewer.LabelLoader(), 
+						// Completion callback
+						function(errors, warnings, vwr) {
+							loadlabelsBtn.ignoreClicks = false;
+							loadlabelsBtn.innerHTML = loadlabelsBtn.readyText;
+							
+							if (errors) {
+								alert('Failed to load labels.\n' + errors);
+								return;
+							} else if (warnings) {
+								alert('Warnings while loading labels:\n' + warnings);
+							}
+							if (vwr.renderEngine.auxLoader.numLabelsFound > cvdata.labelColors.length) {
+								alert('Found more labels than colors available. Some colors will be reused.');
+							}
+
+							cvdata.labelsLabel.innerHTML = files[0].name;
+
+							if (!v3d.renderEngine.hasImageData()) {
+								// Load a dummy volume
+								const vol = v3d.renderEngine.volume;
+								vol.loadBegin(v3d.renderEngine.auxVolume.dims, 8, 'little');
+								vol.fill(0);
+								vol.loadEnd();
+								vol.opacityRange = [0, 255]; 
+								v3d.renderEngine._onVolumeLoaded({clientData:{renderEngineData:{}}});
+								v3d.onNewVolumeLoaded();
+							}
+
+							v3d.fastDrawDownsamp = 1.0;
+							v3d.renderParams.zoom = 0.80 *v3d.calcDefaultOrthoZoom();
+							v3d.render();
+							
+						}.bind(this),
+
+						// Progress callback
+						function(current, total) { 
+							loadlabelsBtn.innerHTML = (current === 0) ? "Loading..." : "Loading " + current + "/" + total;
+						}.bind(this)
+					);
+				}
+				catch(err) {
+					alert('Failed to load labels.\n'  + err);
+					loadlabelsBtn.innerHTML = loadlabelsBtn.readyText;
+					loadlabelsBtn.ignoreClicks = false;
+				}
+			}
+
+			function onShowButtonChange(e) 
+			{
+				const cvdata = document.cvdata;
+				const v3d = cvdata.viewer;
+				const rp = v3d.renderParams;
+				const btns = cvdata.showBtnInfo.btns;
+				const labelColors = cvdata.labelColors;
+				
+				rp.auxVolColorMap[0] = btns[2].checked ? (btns[0].checked ? [0, 0, 0, -1] :  [0, 0, 0, 0]) :  [0, 0, 0, 0];
+				rp.auxVolColorMap[1] = btns[0].checked ? [0, 0, 0, -1] :  [0, 0, 0, 0];
+				for (let i=3; i<24; i++) {
+					rp.auxVolColorMap[i] = btns[1].checked ? labelColors[(i-3)%labelColors.length] : (btns[0].checked ? [0, 0, 0, -1] :  [0, 0, 0, 0]);
+				}
+				v3d.render();
+			}
+
+
+			function setRenderParams()
+			{
+				const rp = document.cvdata.viewer.renderParams;
+				rp.antiAlias = false;
+				rp.showMarker = false
+				rp.persp = 0.5;
+				rp.lightSet = new BigLime.LightSet();
+				rp.lightSet.ambientLight = 0.72;
+				rp.lightSet.dirLights[0] = new BigLime.Light(
+					{diffuse:0.22, specStrength:0.02, specExp:2, shadowDarkness:0.62, shadowSoftness:0.75, 
+						dir:glMatrix.vec3.fromValues(0.48, 0.42, 0.77) });
+				rp.opacityCurve = BigLime.OpacityCurve.FromString(
+					"[0](255, 66, 66, 0); [390](255, 66, 66, 0); [486](219, 195, 77, 105); [505](203, 185, 98, 219); [1023](255, 255, 255, 227)");
+				rp.sealBorders = false;
+				rp.vrBackColor = new BigLime.Color(0, 0, 0);
+				rp.useAuxVol = true; 
+
+				const labelColors = document.cvdata.labelColors;
+				rp.auxVolColorMap[0] = [0, 0, 0, 0];  // unlabeled; invisible
+				rp.auxVolColorMap[1] = [0, 0, 0, -1]; // labeled as background, so render as-is
+				for (let i=3; i<24; i++) {
+					rp.auxVolColorMap[i] = labelColors[(i-3)%labelColors.length]; // labeled as foreground
+				}
+			}
+
+		</script>
+	</head>
+	
+	
+	<body onload="main()">
+		<div id='frame_div'>
+			<div id='viewer_div'></div>
+			<div id='ctrls_div'></div>
+		</div>
+	</body>
+</html>
