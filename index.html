@@ -241,9 +241,11 @@
 				
 				rp.auxVolColorMap[0] = btns[2].checked ? (btns[0].checked ? [0, 0, 0, -1] :  [0, 0, 0, 0]) :  [0, 0, 0, 0];
 				rp.auxVolColorMap[1] = btns[0].checked ? [0, 0, 0, -1] :  [0, 0, 0, 0];
+				rp.auxVolColorMap[2] = btns[0].checked ? [0, 0, 0, -1] :  [0, 0, 0, 0];
 				for (let i=3; i<24; i++) {
 					rp.auxVolColorMap[i] = btns[1].checked ? labelColors[(i-3)%labelColors.length] : (btns[0].checked ? [0, 0, 0, -1] :  [0, 0, 0, 0]);
 				}
+
 				v3d.render();
 			}
 
