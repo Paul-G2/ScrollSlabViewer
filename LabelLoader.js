@@ -183,7 +183,6 @@ Namespace.LabelLoader.prototype._handleMultiImageTiff = async function(fileReade
                     }
                     compValue++;
                     if (compValue >= seedVal) { 
-                        tooManyComponents = true;
                         this.errors = "LabelLoader: Volume has too many connected components.";
                         this.done = true;
                         BigLime.Utils.SafeInvoke(this.loadCompleteCb, [this]);
@@ -241,6 +240,7 @@ Namespace.LabelLoader.prototype._onImageLoadingError = function (arg)
 };
 
 })( window.ScrollSlabViewer = window.ScrollSlabViewer || {} );
+
 
 
 
