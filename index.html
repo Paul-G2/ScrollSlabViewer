@@ -14,7 +14,7 @@
 		<script src="gl-matrix.js"></script>
 		<script src="dexie.js"></script>
 		<script src="UTIF.js"></script>
-		<script src="biglime-min.js"></script>
+		<script src="biglime.js"></script>
 		<script src="LabelLoader.js"></script>
 	
 		<script type="text/javascript">	
@@ -82,15 +82,16 @@
 				cvdata.labelsLabel = BigLime.Ui.CreateElement('label', 'labels_label', ctrlsDiv, {top:'25.3%', height:'1.8%', left:0, right:0, 
 					fontSize:'16px', fontFamily:appFont, fontWeight:'bold', textAlign:'center'}, {innerHTML:''});
 
+				const dpr = window.devicePixelRatio
 				cvdata.showBtnInfo = BigLime.Ui.CreateButtonGroup("show_buttons", ctrlsDiv,
-					{left:'15%', right:'15%', height:160/window.devicePixelRatio, top:'34%', fontSize:16}, 
+					{left:'15%', right:'15%', height:160/dpr, top:'34%', fontSize:16/dpr}, 
 					[ 
 						{label:'Show papyrus', checked:true},
 						{label:'Show labels', checked:true},
 						{label:'Show unlabeled', checked:false},
 					],
 					function(e){ onShowButtonChange(e); },
-					{btnSize:24, btnLeft:18, independent:true}
+					{btnSize:24/dpr, btnLeft:18/dpr, independent:true}
 				);
 
 				BigLime.Ui.CreateElement('fieldset', '0', ctrlsDiv, {bottom:0, height:210, left:20, right:20, border:'1px solid #606060' } );
@@ -280,5 +281,3 @@
 		</div>
 	</body>
 </html>
-
-
