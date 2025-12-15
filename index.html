@@ -21,6 +21,11 @@
 
 			// Main program
 			function main() {
+
+				console.log('test')
+				console.log(window.devicePixelRatio)
+
+				try {
 				const cvdata = document.cvdata = {}
 				cvdata.UNLABELED = 0;
 				cvdata.LABELED_BG = 1;
@@ -117,6 +122,10 @@
 						v3d.render();
 					}
 			 	});
+				}
+				catch(err){
+					consol.log(err)
+				}
 			}
 
 
@@ -280,3 +289,4 @@
 		</div>
 	</body>
 </html>
+
