@@ -66,7 +66,7 @@
 
 				const ctrlsDiv = document.getElementById('ctrls_div');
 				const ctrlsRect = ctrlsDiv.getBoundingClientRect();
-				const fs = Math.min(18, Math.round(0.06*ctrlsRect.width));
+				let fs = Math.min(18, Math.round(0.06*ctrlsRect.width));
 				const dpr = window.devicePixelRatio
 				if (dpr > 1) { fs /= 0.8*dpr}
 
@@ -290,3 +290,4 @@
 		</div>
 	</body>
 </html>
+
