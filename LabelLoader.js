@@ -8,15 +8,13 @@
  * It requires the UTIF library.
  * 
  * @constructor
- * @param {Boolean} reverseSort - Whether to sort the files in reverse order.
  */
-Namespace.LabelLoader = function(opts = {}) 
+Namespace.LabelLoader = function() 
 {
     // Inherit from Loader3D
     BigLime.Loader3D.call(this);
 
     this.fileList = [];
-    this.reverseSort = !!opts.reverseSort;
     this.numLabelsFound = 0;
 };
 Namespace.LabelLoader.prototype = Object.create(BigLime.Loader3D.prototype);
@@ -136,7 +134,7 @@ Namespace.LabelLoader.prototype._handleMultiImageTiff = async function(fileReade
                 for (let x = 0; x < imgWidth; x++) {
                     const nxy = y*imgWidth + x;
                     if (bufz[nxy] != foreground) { continue; }
-                    bufz[nxy] = seedVal; // Indicates a seed
+                    bufz[nxy] = seedVal; 
                     const seeds = [x, y, z];
             
                     while (seeds.length > 0)
@@ -183,7 +181,7 @@ Namespace.LabelLoader.prototype._handleMultiImageTiff = async function(fileReade
                     }
                     compValue++;
                     if (compValue >= seedVal) { 
-                        this.errors = "LabelLoader: Volume has too many connected components.";
+                        this.errors = "Label volume has too many connected components.\n(Maybe you loaded an image volume instead of a label volume?)";
                         this.done = true;
                         BigLime.Utils.SafeInvoke(this.loadCompleteCb, [this]);
                         return;       
