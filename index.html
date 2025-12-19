@@ -68,6 +68,7 @@
 				const ctrlsRect = ctrlsDiv.getBoundingClientRect();
 				let fs = Math.min(18, Math.round(0.06*ctrlsRect.width));
 				const dpr = window.devicePixelRatio
+				if (dpr > 1) { fs /= 0.8*dpr}
 
 				BigLime.Ui.CreateElement('label', 'title_label', ctrlsDiv, {top:0, height:'3.2%', left:0, right:0, 
 					fontSize:'1.5vw', fontFamily:appFont, fontWeight:'bold', textAlign:'center'}, {innerHTML:'Scroll Slab Viewer'});
@@ -289,5 +290,3 @@
 		</div>
 	</body>
 </html>
-
-
