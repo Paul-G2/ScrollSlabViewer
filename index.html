@@ -21,7 +21,7 @@
 
 			// Main program
 			function main() {
-				const cvdata = document.cvdata = {}
+				const cvdata = document.cvdata = { numLabelsFound:0, activeLabel:-1}
 				cvdata.UNLABELED = 0;
 				cvdata.LABELED_BG = 1;
 				cvdata.LABELED_FG = 2;
@@ -68,7 +68,6 @@
 				const ctrlsRect = ctrlsDiv.getBoundingClientRect();
 				let fs = Math.min(18, Math.round(0.06*ctrlsRect.width));
 				const dpr = window.devicePixelRatio
-				if (dpr > 1) { fs /= 0.8*dpr}
 
 				BigLime.Ui.CreateElement('label', 'title_label', ctrlsDiv, {top:0, height:'3.2%', left:0, right:0, 
 					fontSize:'1.5vw', fontFamily:appFont, fontWeight:'bold', textAlign:'center'}, {innerHTML:'Scroll Slab Viewer'});
@@ -95,33 +94,47 @@
 						{label:'Show labels', checked:true},
 						{label:'Show unlabeled', checked:false},
 					],
-					function(e){ onShowButtonChange(e); },
+					function(e){ updateLabelColors(); document.cvdata.viewer.render(); },
 					{btnSize:24/dpr, btnLeft:18/dpr, independent:true}
 				);
 
-				const fsb = fs;//"min(1.3vw, 16px)"; //fs.toString() + 'px';
-				const fieldset = BigLime.Ui.CreateElement('fieldset', '0', ctrlsDiv, {bottom:0, height:'21%', left:'10%', right:'10%',
-					fontSize:fsb, fontFamily:appFont, fontWeight:'normal', border:'1px solid #606060' } );
-				BigLime.Ui.CreateElement('label', '1', fieldset, {top:'2%', left:'8%' }, {innerHTML:'Mouse:'});
-				BigLime.Ui.CreateElement('label', '2', fieldset, {top:'17%', left:'16%'}, {innerHTML:'Left:'});
-				BigLime.Ui.CreateElement('label', '3', fieldset, {top:'17%', left:'58%'}, {innerHTML:'Rotate'});
-				BigLime.Ui.CreateElement('label', '4', fieldset, {top:'30%', left:'16%'}, {innerHTML:'Middle:'});
-				BigLime.Ui.CreateElement('label', '5', fieldset, {top:'30%', left:'58%'}, {innerHTML:'Zoom'});
-				BigLime.Ui.CreateElement('label', '6', fieldset, {top:'43%', left:'16%'}, {innerHTML:'Right:'});
-				BigLime.Ui.CreateElement('label', '7', fieldset, {top:'43%', left:'58%'}, {innerHTML:'Pan'});
-				BigLime.Ui.CreateElement('label', '8', fieldset, {top:'56%', left:'16%'}, {innerHTML:'Shift-Left:'});
-				BigLime.Ui.CreateElement('label', '9', fieldset, {top:'56%', left:'58%'}, {innerHTML:'Contrast'});
-				BigLime.Ui.CreateElement('label', 'a', fieldset, {top:'69%', left:'16%'}, {innerHTML:'Ctrl-Left:'});
-				BigLime.Ui.CreateElement('label', 'b', fieldset, {top:'69%', left:'58%'}, {innerHTML:'Clip box'});
-				BigLime.Ui.CreateElement('label', 'c', fieldset, {top:'85%',  left:'16%'}, {innerHTML:"'R' to reset"});
+				const fieldset = BigLime.Ui.CreateElement('fieldset', '0', ctrlsDiv, {bottom:0, height:'25%', left:'10%', right:'10%',
+					fontSize:fs, fontFamily:appFont, fontWeight:'normal', border:'1px solid #606060' } );
+				BigLime.Ui.CreateElement('label', '1', fieldset, {top:'1.8%', left:'8%' }, {innerHTML:'Mouse:'});
+				BigLime.Ui.CreateElement('label', '2', fieldset, {top:'15%', left:'16%'}, {innerHTML:'Left:'});
+				BigLime.Ui.CreateElement('label', '3', fieldset, {top:'15%', left:'58%'}, {innerHTML:'Rotate'});
+				BigLime.Ui.CreateElement('label', '4', fieldset, {top:'27%', left:'16%'}, {innerHTML:'Middle:'});
+				BigLime.Ui.CreateElement('label', '5', fieldset, {top:'27%', left:'58%'}, {innerHTML:'Zoom'});
+				BigLime.Ui.CreateElement('label', '6', fieldset, {top:'39%', left:'16%'}, {innerHTML:'Right:'});
+				BigLime.Ui.CreateElement('label', '7', fieldset, {top:'39%', left:'58%'}, {innerHTML:'Pan'});
+				BigLime.Ui.CreateElement('label', '8', fieldset, {top:'51%', left:'16%'}, {innerHTML:'Shift-Left:'});
+				BigLime.Ui.CreateElement('label', '9', fieldset, {top:'51%', left:'58%'}, {innerHTML:'Contrast'});
+				BigLime.Ui.CreateElement('label', 'a', fieldset, {top:'63%', left:'16%'}, {innerHTML:'Ctrl-Left:'});
+				BigLime.Ui.CreateElement('label', 'b', fieldset, {top:'63%', left:'58%'}, {innerHTML:'Clip box'});
+				BigLime.Ui.CreateElement('label', 'c', fieldset, {top:'79%',  left:'16%'}, {innerHTML:"R to reset"});
+				BigLime.Ui.CreateElement('label', 'c', fieldset, {top:'89%',  left:'16%'}, {innerHTML:"A/D to cycle labels"});
 
 				document.addEventListener('keyup', (event) => {
+					const cvdata = document.cvdata;
+					const v3d = cvdata.viewer;
+
 					if (event.code == 'KeyR') {
-						const v3d = document.cvdata.viewer;
 						v3d.resetPan();
 						v3d.renderParams.zoom = 0.80*v3d.calcDefaultOrthoZoom();
 						v3d.resetOrientation();
 						v3d.resetSlab();
+						v3d.render();
+					}
+					else if (event.code == 'KeyA') {
+						cvdata.activeLabel--;
+						if (cvdata.activeLabel == -2) { cvdata.activeLabel = cvdata.numLabelsFound-1; }
+						updateLabelColors();
+						v3d.render();
+					}
+					else if (event.code == 'KeyD') {
+						cvdata.activeLabel++;
+						if (cvdata.activeLabel >= cvdata.numLabelsFound) { cvdata.activeLabel = -1; }
+						updateLabelColors();
 						v3d.render();
 					}
 			 	});
@@ -199,9 +212,13 @@
 							} else if (warnings) {
 								alert('Warnings while loading labels:\n' + warnings);
 							}
-							if (vwr.renderEngine.auxLoader.numLabelsFound > cvdata.labelColors.length) {
+
+							cvdata.numLabelsFound = vwr.renderEngine.auxLoader.numLabelsFound;
+							if (cvdata.numLabelsFound > cvdata.labelColors.length) {
 								alert('Found more labels than colors available. Some colors will be reused.');
 							}
+							cvdata.activeLabel = -1;
+							updateLabelColors();
 
 							cvdata.labelsLabel.innerHTML = files[0].name;
 
@@ -235,24 +252,34 @@
 				}
 			}
 
-			function onShowButtonChange(e) 
+			function updateLabelColors()
 			{
 				const cvdata = document.cvdata;
-				const v3d = cvdata.viewer;
-				const rp = v3d.renderParams;
+				const rp = cvdata.viewer.renderParams;
 				const btns = cvdata.showBtnInfo.btns;
 				const labelColors = cvdata.labelColors;
-				
+
 				rp.auxVolColorMap[0] = btns[2].checked ? (btns[0].checked ? [0, 0, 0, -1] :  [0, 0, 0, 0]) :  [0, 0, 0, 0];
 				rp.auxVolColorMap[1] = btns[0].checked ? [0, 0, 0, -1] :  [0, 0, 0, 0];
 				rp.auxVolColorMap[2] = btns[0].checked ? [0, 0, 0, -1] :  [0, 0, 0, 0];
+
 				for (let i=3; i<24; i++) {
-					rp.auxVolColorMap[i] = btns[1].checked ? labelColors[(i-3)%labelColors.length] : (btns[0].checked ? [0, 0, 0, -1] :  [0, 0, 0, 0]);
+					const labelIsActive = (cvdata.activeLabel == i-3) || (cvdata.activeLabel == -1);
+					const labelColor = labelColors[(i-3)%labelColors.length];
+					if (!btns[0].checked && !btns[1].checked) {
+						rp.auxVolColorMap[i] = [0, 0, 0, 0];
+					}
+					else if (btns[0].checked && !btns[1].checked) {
+						rp.auxVolColorMap[i] = [0, 0, 0, -1];
+					}
+					else if (!btns[0].checked && btns[1].checked) {
+						rp.auxVolColorMap[i] = labelIsActive ? labelColor : [0, 0, 0, 0];
+					} 
+					else {
+						rp.auxVolColorMap[i] = labelIsActive ? labelColor : [0, 0, 0, -1];
+					}
 				}
-
-				v3d.render();
 			}
-
 
 			function setRenderParams()
 			{
