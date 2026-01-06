@@ -3,6 +3,7 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Scroll Slab Viewer</title>
+		<link rel="icon" type="image/png" href="./appicon.png">
 
         <style>
 			body {background-color:#7092be; overflow:hidden; user-select:none;}	
@@ -111,8 +112,8 @@
 				BigLime.Ui.CreateElement('label', '9', fieldset, {top:'51%', left:'58%'}, {innerHTML:'Contrast'});
 				BigLime.Ui.CreateElement('label', 'a', fieldset, {top:'63%', left:'16%'}, {innerHTML:'Ctrl-Left:'});
 				BigLime.Ui.CreateElement('label', 'b', fieldset, {top:'63%', left:'58%'}, {innerHTML:'Clip box'});
-				BigLime.Ui.CreateElement('label', 'c', fieldset, {top:'79%',  left:'16%'}, {innerHTML:"R to reset"});
-				BigLime.Ui.CreateElement('label', 'c', fieldset, {top:'89%',  left:'16%'}, {innerHTML:"A/D to cycle labels"});
+				BigLime.Ui.CreateElement('label', 'c', fieldset, {top:'78%',  left:'8%'}, {innerHTML:"R to reset."});
+				BigLime.Ui.CreateElement('label', 'd', fieldset, {top:'89%',  left:'8%'}, {innerHTML:"A/D to cycle labels."});
 
 				document.addEventListener('keyup', (event) => {
 					const cvdata = document.cvdata;
@@ -214,8 +215,11 @@
 							}
 
 							cvdata.numLabelsFound = vwr.renderEngine.auxLoader.numLabelsFound;
-							if (cvdata.numLabelsFound > cvdata.labelColors.length) {
-								alert('Found more labels than colors available. Some colors will be reused.');
+							if (cvdata.numLabelsFound >= 251) {
+								alert('Label volume has > 250 components. \n(Maybe you loaded an image volume instead of a label volume?) \nSome colors will be reused.');
+							}
+							else if (cvdata.numLabelsFound > cvdata.labelColors.length) {
+								alert('Label volume has more components than available colors, so some colors will be reused.');
 							}
 							cvdata.activeLabel = -1;
 							updateLabelColors();
@@ -259,24 +263,26 @@
 				const btns = cvdata.showBtnInfo.btns;
 				const labelColors = cvdata.labelColors;
 
-				rp.auxVolColorMap[0] = btns[2].checked ? (btns[0].checked ? [0, 0, 0, -1] :  [0, 0, 0, 0]) :  [0, 0, 0, 0];
-				rp.auxVolColorMap[1] = btns[0].checked ? [0, 0, 0, -1] :  [0, 0, 0, 0];
-				rp.auxVolColorMap[2] = btns[0].checked ? [0, 0, 0, -1] :  [0, 0, 0, 0];
+				rp.auxVolColorMap[0] = (btns[2].checked && btns[0].checked) ? [0, 0, 0, -1] : [0, 0, 0, 0];
+				rp.auxVolColorMap[1] = btns[0].checked ? [0, 0, 0, -1] : [0, 0, 0, 0];
+				rp.auxVolColorMap[2] = btns[0].checked ? [0, 0, 0, -1] : [0, 0, 0, 0];
 
-				for (let i=3; i<24; i++) {
-					const labelIsActive = (cvdata.activeLabel == i-3) || (cvdata.activeLabel == -1);
-					const labelColor = labelColors[(i-3)%labelColors.length];
-					if (!btns[0].checked && !btns[1].checked) {
-						rp.auxVolColorMap[i] = [0, 0, 0, 0];
-					}
-					else if (btns[0].checked && !btns[1].checked) {
-						rp.auxVolColorMap[i] = [0, 0, 0, -1];
-					}
-					else if (!btns[0].checked && btns[1].checked) {
-						rp.auxVolColorMap[i] = labelIsActive ? labelColor : [0, 0, 0, 0];
-					} 
-					else {
-						rp.auxVolColorMap[i] = labelIsActive ? labelColor : [0, 0, 0, -1];
+				for (let i=3; i<labelColors.length+3; i++) {
+					const labelIsActive = (cvdata.activeLabel%labelColors.length == i-3) || (cvdata.activeLabel == -1);
+					const labelColor = labelColors[(i-3)];
+					if (i < 24) {
+						if (!btns[0].checked && !btns[1].checked) {
+							rp.auxVolColorMap[i] = [0, 0, 0, 0];
+						}
+						else if (btns[0].checked && !btns[1].checked) {
+							rp.auxVolColorMap[i] = [0, 0, 0, -1];
+						}
+						else if (!btns[0].checked && btns[1].checked) {
+							rp.auxVolColorMap[i] = labelIsActive ? labelColor : [0, 0, 0, 0];
+						} 
+						else {
+							rp.auxVolColorMap[i] = labelIsActive ? labelColor : [0, 0, 0, -1];
+						}
 					}
 				}
 			}

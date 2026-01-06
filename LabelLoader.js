@@ -109,7 +109,7 @@ Namespace.LabelLoader.prototype._handleMultiImageTiff = async function(fileReade
 
         // Decode and copy pixel data into local array
         const imgBufferArray = new Array(numImgs);    
-        const unlabeled = 0, background = 1, foreground = 2, seedVal = 255;
+        const unlabeled = 0, background = 1, foreground = 2, seedVal = 255; 
         for (let z = 0; z < numImgs; z++) {
             UTIF.decodeImage(fileBytes, ifds[z]);
             var arr = imgBufferArray[z] = new Uint8Array(ifds[z].data.buffer); 
@@ -128,6 +128,7 @@ Namespace.LabelLoader.prototype._handleMultiImageTiff = async function(fileReade
 
         // Find connected components, labeling each component with a unique number
         let compValue = 3;
+        this.numLabelsFound = 0;
         for (let z = 0; z < numImgs; z++) {
             const bufz = imgBufferArray[z];
             for (let y = 0; y < imgHeight; y++) { 
@@ -143,19 +144,19 @@ Namespace.LabelLoader.prototype._handleMultiImageTiff = async function(fileReade
                         const seedY = seeds.pop();
                         const seedX = seeds.pop();
                         imgBufferArray[seedZ][seedY*imgWidth + seedX] = compValue;
-                        for (var dz=-1; dz<=1; dz++)
+                        for (let dz=-1; dz<=1; dz++)
                         {
                             const zp = seedZ + dz;
                             if (zp<0 || zp>=numImgs) { continue; }
                             const bufzp = imgBufferArray[zp];
-                            for (var dy=-1; dy<=1; dy++)
+                            for (let dy=-1; dy<=1; dy++)
                             {
-                                var yp = seedY + dy;
+                                const yp = seedY + dy;
                                 if (yp<0 || yp>=imgHeight) { continue; }
-                                var ypw = yp*imgWidth;
+                                const ypw = yp*imgWidth;
 
                                     // Unrolled inner loop:
-                                    var xp = seedX - 1;
+                                    let xp = seedX - 1;
                                     if (xp >= 0) { 
                                         if (bufzp[ypw + xp] == foreground) { 
                                             seeds.push(xp, yp, zp);
@@ -179,13 +180,8 @@ Namespace.LabelLoader.prototype._handleMultiImageTiff = async function(fileReade
                             }   
                         }     
                     }
-                    compValue++;
-                    if (compValue >= seedVal) { 
-                        this.errors = "Label volume has too many connected components.\n(Maybe you loaded an image volume instead of a label volume?)";
-                        this.done = true;
-                        BigLime.Utils.SafeInvoke(this.loadCompleteCb, [this]);
-                        return;       
-                    }
+                    compValue = Math.min(compValue+1, 254);
+                    this.numLabelsFound = Math.min(this.numLabelsFound+1, 252);
                 }
             }
         }
